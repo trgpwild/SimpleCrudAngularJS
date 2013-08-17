@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html ng-app="app">
+<head>
+	<title>ContactsAngularJs</title>
+	<link href="css/bootstrap-2.3.2.css" rel="stylesheet">
+	<link href="css/bootstrap-responsive-2.3.2.css" rel="stylesheet">
+</head>
+<body ng-controller="ContactController">
+	<table>
+		<tr ng-repeat="contact in contacts">
+			<td><a ng-click="edit(contact)">{{contact.name}}</a></td>
+			<td>{{contact.phone}}</td>
+			<td><a class="btn btn-danger" ng-click="remove(contact)">Remove</a></td>
+		</tr>
+	</table>
+	<div>
+		<div><input type="button" ng-click="newOne()" value="New" class="btn"/></div>
+		<hr/>
+		<div><input type="text" ng-model="contact.name" name="name"/></div>
+		<div><input type="text" ng-model="contact.phone" name="phone"/></div>
+		<div><input type="button" ng-click="add()" value="SAVE" class="btn"/></div>
+	</div>
+	<script src="lib/angular.js"></script>
+	<script src="lib/angular-resource.js"></script>
+	<script type="text/javascript">
+
+		$app=angular.module('app',['ngResource']);
+	
+		$app.factory('ContactService', ['$resource', function($resource) {
+		    return $resource('rest/contacts/:id', {id: '@id'});
+		}]);
+	
+		var ContactController = function($scope, ContactService) {
+			
+			$scope.contacts = ContactService.query();
+	
+			$scope.contact = new ContactService();
+	
+			$scope.edit = function(contact) {
+				$scope.contact = contact;
+			};
+			
+			$scope.newOne = function() {
+				$scope.contact = new ContactService();
+			};
+	
+			$scope.add = function() {
+				$scope.contact.$save(function() {
+					$scope.contacts = ContactService.query();
+				});
+			};
+			
+			$scope.remove = function(contact) {
+				$scope.contact.$delete({id: contact.id}, function(res) {
+					$scope.contacts = ContactService.query();
+					$scope.contact = new ContactService();
+				});
+			};
+	
+		};
+		
+	</script>
+</body>
+</html>
