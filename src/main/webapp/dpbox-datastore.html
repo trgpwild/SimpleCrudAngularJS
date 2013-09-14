@@ -7,7 +7,7 @@
 </head>
 <body ng-controller="ContactController">
 	<table>
-		<tr ng-repeat="contact in contacts">
+		<tr ng-repeat="contact in contacts | orderBy:['name']">
 			<td><a ng-click="edit(contact)">{{contact.name}}</a></td>
 			<td>{{contact.phone}}</td>
 			<td><a class="btn btn-danger" ng-click="remove(contact)">Remove</a></td>
@@ -22,99 +22,81 @@
 	</div>
 	<script src="https://www.dropbox.com/static/api/1/dropbox-datastores-0.1.0-b6.js" type="text/javascript"></script>
 	<script src="lib/angular.js"></script>
+	<script src="lib/dropstore-ng.js"></script>
 	<script type="text/javascript">
 
-		function loadDatastore(callback) {
-			
-			var client = new Dropbox.Client({
-				token : "9VHF-d78gp0AAAAAAAAAAUffVWd8Jz4NRzyQNuDZsfO0YGY0DqWbNuiIqTzJ7PGq"
-			});
+		$app = angular.module('app', ['dropstore-ng']);
 
-			client.authenticate({interactive: false}, function(error) {
-				if (error) {
-					console.log('Authentication error: ' + error);
-				}
-			});
-			if (client.isAuthenticated()) {
-				console.log('authenticated to dropbox');
-				var datastoreManager = client.getDatastoreManager();
-				datastoreManager.openDefaultDatastore(function(error, datastore) {
-					if (error) {
-						console.log('Error opening default datastore: ' + error);
-					} else {
-						console.log("conected to dropbox datastore");
-						datastore.recordsChanged.addListener(function(event) {
-							console.log('contacts changed:', event.affectedRecordsForTable('contacts'));
+		var ContactController = function($scope, dropstoreClient) {
+			
+			$scope.contacts = [];
+
+			var emptyContact = {
+				name:'',
+				phone:''
+			};
+			
+			$scope.contact = emptyContact;
+			
+			dropstoreClient.create({
+				token: '9VHF-d78gp0AAAAAAAAAAUffVWd8Jz4NRzyQNuDZsfO0YGY0DqWbNuiIqTzJ7PGq'
+			}).authenticate({interactive: false})
+		    .then(function(datastoreManager){
+		        console.log('completed authentication');
+		        return datastoreManager.openDefaultDatastore();
+		    })
+		    .then(function(datastore){
+				
+		    	var contactTable = datastore.getTable('contacts');
+				
+		    	function listContacts() {
+		    		
+			    	$scope.contacts = [];
+
+			    	var contacts = contactTable.query();
+					
+					for (var i=0; i<contacts.length; i++) {
+						$scope.contacts.push({
+							obj: contacts[i],
+							name: contacts[i].get('name'),
+							phone: contacts[i].get('phone')
 						});
-						callback(datastore);
 					}
-				});
-			}
+					
+		    	}
+		    	
+		    	listContacts();
 
-		}
+				$scope.newOne = function() {
+					$scope.contactEditing = false;
+					$scope.contact = emptyContact;
+				};
 
-		$app = angular.module('app', []);
+				$scope.edit = function(contact) {
+					$scope.contactEditing = true;
+					$scope.contact = contact;
+					listContacts();
+				};
 
-		var ContactController = function($scope) {
-			
-			$scope.contacts = [{name: 'xxx', phone: 'xxx'}]
-			
-			loadDatastore(function(datastore) {
-				
-				var contactTable = datastore.getTable('contacts');
-				
-/*  				var contacts = contactTable.query();
-				
-				for (var i = 0; i < contacts.length; i++) {
-					contacts[i].deleteRecord();
-				}
-				
-				console.log(contacts.length);
-								
- 				for (var i = 0; i < 5; i++) {
+				$scope.add = function() {
+					if ($scope.contactEditing) {
+						$scope.contact.obj.deleteRecord();
+					}
 					var contact = contactTable.insert({
-						name : 'Contact ' + i,
-						phone : '011-11111111'
+						name: $scope.contact.name,
+						phone: $scope.contact.phone
 					});
-				}
- */ 			
-				var contacts = contactTable.query();
-				console.log(contacts.length);
+					$scope.contact = emptyContact;
+					listContacts();
+				};
 
-				for (var i = 0; i < contacts.length; i++) {
-					$scope.contacts.push({
-						name: i,//contacts[i].get('name'),
-						phone: i//contacts[i].get('phone')
-					});
-				}
-				
-			});
+				$scope.remove = function(contact) {
+					contact.obj.deleteRecord();
+					listContacts();
+				};
+
+		    });
 			
-			$scope.contact = null;
-
-			$scope.edit = function(contact) {
-				$scope.contact = contact;
-			};
-
-			$scope.newOne = function() {
-				$scope.contact = new ContactService();
-			};
-
-			$scope.add = function() {
-				$scope.contact.$save(function() {
-					$scope.contacts = ContactService.query();
-				});
-			};
-
-			$scope.remove = function(contact) {
-				$scope.contact.$delete({
-					id : contact.id
-				}, function(res) {
-					$scope.contacts = ContactService.query();
-					$scope.contact = new ContactService();
-				});
-			};
-
 		};
 	</script>
 </body>
