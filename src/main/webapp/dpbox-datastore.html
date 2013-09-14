@@ -56,12 +56,14 @@
 		$app = angular.module('app', []);
 
 		var ContactController = function($scope) {
-
+			
+			$scope.contacts = [{name: 'xxx', phone: 'xxx'}]
+			
 			loadDatastore(function(datastore) {
 				
 				var contactTable = datastore.getTable('contacts');
 				
-				var contacts = contactTable.query();
+/*  				var contacts = contactTable.query();
 				
 				for (var i = 0; i < contacts.length; i++) {
 					contacts[i].deleteRecord();
@@ -75,12 +77,17 @@
 						phone : '011-11111111'
 					});
 				}
-			
+ */ 			
 				var contacts = contactTable.query();
 				console.log(contacts.length);
 
-//				$scope.contacts = contacts;
-
+				for (var i = 0; i < contacts.length; i++) {
+					$scope.contacts.push({
+						name: i,//contacts[i].get('name'),
+						phone: i//contacts[i].get('phone')
+					});
+				}
+				
 			});
 			
 			$scope.contact = null;
