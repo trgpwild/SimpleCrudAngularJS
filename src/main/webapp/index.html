@@ -22,43 +22,6 @@
 	</div>
 	<script src="lib/angular.js"></script>
 	<script src="lib/angular-resource.js"></script>
-	<script type="text/javascript">
-
-		$app=angular.module('app',['ngResource']);
-	
-		$app.factory('ContactService', ['$resource', function($resource) {
-		    return $resource('rest/contacts/:id', {id: '@id'});
-		}]);
-	
-		var ContactController = function($scope, ContactService) {
-			
-			$scope.contacts = ContactService.query();
-	
-			$scope.contact = new ContactService();
-	
-			$scope.edit = function(contact) {
-				$scope.contact = contact;
-			};
-			
-			$scope.newOne = function() {
-				$scope.contact = new ContactService();
-			};
-	
-			$scope.add = function() {
-				$scope.contact.$save(function() {
-					$scope.contacts = ContactService.query();
-				});
-			};
-			
-			$scope.remove = function(contact) {
-				$scope.contact.$delete({id: contact.id}, function(res) {
-					$scope.contacts = ContactService.query();
-					$scope.contact = new ContactService();
-				});
-			};
-	
-		};
-		
-	</script>
+	<script src="index.js"></script>
 </body>
 </html>
